@@ -146,6 +146,14 @@ export default function Dashboard() {
       setTodayLogs((logs) =>
         logs.filter((l) => String(l.habitId) !== String(habit._id))
       );
+      setWeekLogs((logs) =>
+        logs.filter((l) => !(String(l.habitId) === String(habit._id) && l.completedDate === today))
+      );
+      setHeatmap((prev) =>
+        prev.map((item) =>
+          item.date === today ? { ...item, count: Math.max(0, item.count - 1) } : item
+        )
+      );
       setAllLogsByHabit((prev) => {
         const next = { ...prev };
         next[habit._id] = (next[habit._id] || []).filter((d) => d !== today);
@@ -154,6 +162,12 @@ export default function Dashboard() {
     } else {
       const res = await api.post("/logs", { habitId: habit._id, date: today });
       setTodayLogs((logs) => [...logs, res.data]);
+      setWeekLogs((logs) => [...logs, res.data]);
+      setHeatmap((prev) =>
+        prev.map((item) =>
+          item.date === today ? { ...item, count: item.count + 1 } : item
+        )
+      );
       setAllLogsByHabit((prev) => {
         const next = { ...prev };
         next[habit._id] = [today, ...(next[habit._id] || [])];
