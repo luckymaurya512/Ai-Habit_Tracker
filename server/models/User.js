@@ -26,6 +26,18 @@ const userSchema = new mongoose.Schema({
     morningMotivation: {
         type: Boolean,
         default: true
+    },
+    isEmailVerified: {
+        type: Boolean,
+        default: false
+    },
+    emailVerificationToken: {
+        type: String,
+        default: null
+    },
+    emailVerificationTokenExpiry: {
+        type: Date,
+        default: null
     }
 }, { timestamps: true }
 );
@@ -43,6 +55,8 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 userSchema.methods.toJSON = function () {
     const obj = this.toObject();
     delete obj.password;
+    delete obj.emailVerificationToken;
+    delete obj.emailVerificationTokenExpiry;
     return obj;
 }
 

@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Sparkles, Sun, Moon } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
+import api from "../api/axios.js";
 
 export default function Login() {
   const { user, login } = useAuth();
@@ -13,20 +14,50 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const [is403, setIs403] = useState(false);
+  const [resendStatus, setResendStatus] = useState("");
+  const [resendLoading, setResendLoading] = useState(false);
 
   if (user) return <Navigate to="/dashboard" replace />;
 
   const submit = async (e) => {
     e.preventDefault();
     setErr("");
+    setIs403(false);
+    setResendStatus("");
     setLoading(true);
     try {
       await login(email, password);
       navigate(loc.state?.from || "/dashboard", { replace: true });
     } catch (e) {
-      setErr(e.response?.data?.message || "Login failed");
+      if (e.response?.status === 403) {
+        setIs403(true);
+        setErr("Please verify your email before logging in.");
+      } else {
+        setErr(e.response?.data?.message || "Login failed");
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResendLoading(true);
+    try {
+      const res = await api.post("/auth/resend-verification", { email });
+      if (res.status === 200) {
+        setResendStatus("Verification email sent. Please check your inbox.");
+      } else {
+        setResendStatus("Failed to send. Please try again.");
+      }
+    } catch (e) {
+      if (e.response?.status === 429) {
+        setResendStatus("Please wait before requesting another verification email.");
+      } else {
+        setResendStatus("Failed to send. Please try again.");
+      }
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -84,6 +115,23 @@ export default function Login() {
             {err && (
               <div className="text-sm text-rose-500 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
                 {err}
+              </div>
+            )}
+            {is403 && (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendLoading}
+                  className="btn-primary w-full py-2 text-sm"
+                >
+                  {resendLoading ? "Sending..." : "Resend verification email"}
+                </button>
+                {resendStatus && (
+                  <div className="text-sm text-muted bg-surface border border-border rounded-lg px-3 py-2">
+                    {resendStatus}
+                  </div>
+                )}
               </div>
             )}
             <button

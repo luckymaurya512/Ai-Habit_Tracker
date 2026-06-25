@@ -32,6 +32,8 @@ export default function Sidebar() {
   const [morning, setMorning] = useState(user?.morningMotivation || false);
   const [name, setName] = useState(user?.name || "");
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const save = async () => {
     setSaving(true);
@@ -44,6 +46,18 @@ export default function Sidebar() {
       setSettingsOpen(false);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await api.delete("/auth/account");
+      logout();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete account. Please try again.");
+      setDeleting(false);
+      setConfirmDelete(false);
     }
   };
 
@@ -152,6 +166,41 @@ export default function Sidebar() {
             <button className="btn-primary" onClick={save} disabled={saving}>
               {saving ? "Saving..." : "Save"}
             </button>
+          </div>
+
+          {/* Danger zone */}
+          <div className="border-t divider pt-4 mt-2">
+            <p className="text-xs text-faint mb-3">Danger zone</p>
+            {!confirmDelete ? (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="w-full text-sm text-rose-500 border border-rose-500/30 rounded-xl px-3 py-2.5 hover:bg-rose-500/10 transition"
+              >
+                Delete account
+              </button>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-rose-500">
+                  This permanently deletes your account, all habits, logs, and AI insights. This cannot be undone.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    className="btn-secondary flex-1"
+                    onClick={() => setConfirmDelete(false)}
+                    disabled={deleting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={deleting}
+                    className="flex-1 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-xl px-3 py-2.5 transition disabled:opacity-50"
+                  >
+                    {deleting ? "Deleting..." : "Yes, delete everything"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </Modal>
