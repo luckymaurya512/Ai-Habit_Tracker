@@ -10,6 +10,9 @@ import aiRoutes from "./routes/ai.js";
 import { notFound, errorHandler } from "./middleware/errorHandler.js";
 
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
+if (typeof dns.setDefaultResultOrder === "function") {
+    dns.setDefaultResultOrder("ipv4first");
+}
 
 const app = express();
 
